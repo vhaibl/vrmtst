@@ -3,6 +3,7 @@ Copyright 2021 ООО «Верме»
 """
 
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from orgunits.api_v1.serializers import OrganizationSerializer
 from orgunits.models import Organization
@@ -16,12 +17,14 @@ class OrganizationsViewSet(AnyAuthMixin, AppViewSet):
 
     @action(methods=["GET"], detail=True)
     def parents(self, request, *args, **kwargs):
-        """Возвращает родителей запрашиваемой организации
-        TODO: Сделать метод API"""
-        pass
+        pk = kwargs.get('pk')
+        instance = Organization(pk).parents()
+        data = self.get_serializer(instance, many=True).data
+        return Response(data)
 
     @action(methods=["GET"], detail=True)
     def children(self, request, *args, **kwargs):
-        """Возвращает детей запрашиваемой организации
-        TODO: Сделать метод API"""
-        pass
+        pk = kwargs.get('pk')
+        instance = Organization(pk).children()
+        data = self.get_serializer(instance, many=True).data
+        return Response(data)

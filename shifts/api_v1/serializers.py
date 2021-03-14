@@ -4,22 +4,28 @@ Copyright 2021 ООО «Верме»
 
 from rest_framework import serializers
 
-from shifts.models import Shift
+from shifts.models import Shift, ShiftHistory
 
 
-class StateHistorySerializer(serializers.Serializer):
-    pass
+class StateHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShiftHistory
+        fields = '__all__'
+
+    # pass
 
 
 class ShiftSerializer(serializers.ModelSerializer):
+    change_history = StateHistorySerializer(read_only=True, many=True)
     class Meta:
         model = Shift
-        fields = ["id", "organization", "employee", "start", "end"]
+        fields = ["id", "organization", "employee", "start", "end", "change_history"]
 
 
 class ShiftDetailSerializer(ShiftSerializer):
-    state_history = StateHistorySerializer(read_only=True, many=True)
+    # change_history = StateHistorySerializer(read_only=True, many=True)
 
     class Meta:
         model = Shift
-        fields = ["id", "organization", "employee", "start", "end", "state_history"]
+
+        fields = ["id", "organization", "employee", "start", "end"]
