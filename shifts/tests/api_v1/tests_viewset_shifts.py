@@ -57,7 +57,7 @@ def test_get_shifts_list_available(tz, employee_api, shift, make_shift):
         end="2021-03-09T18:00:00+03:00",
     )
 
-    assert employee_api.get("/api/v1/shifts/") == [
+    assert employee_api.get("/api/v1/shifts/available/") == [
         {
             "id": shift_3.id,
             "start": shift_3.start.astimezone(tz).isoformat(),
