@@ -30,6 +30,7 @@ class ShiftsViewSet(AnyAuthMixin, AppViewSet):
             raise ValidationError("Запрос должен производиться сотрудником")
         queryset = self.filter_queryset(self.get_queryset())
         queryset = queryset.filter_availability(request.employee.occupancy_schedule)
+        print(request.employee.occupancy_schedule, 'in view')
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

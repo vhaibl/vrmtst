@@ -1,5 +1,7 @@
 import datetime
 
+from django.db.models import Q
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -9,10 +11,16 @@ from orgunits.models import Organization
 
 class ShiftQuerySet(models.QuerySet):
     def filter_availability(self, occupancy_schedule):
-        """TODO: Сделать фильтрацию по интервалам недельного календаря недоступностей сотрудника"""
-        probe = self.filter(start__lte=occupancy_schedule['start_time'])
+        # zz = []
+        # for x in occupancy_schedule:
+        # datestart = datetime.datetime.strptime(x['start_time'], '%H:%M:%S')
+        # dateend = datetime.datetime.strptime(x['end_time'], '%d %H:%M:%S')
+        # weekday = x['weekday']
+            # weekday = 0
 
-        return probe
+        filter_weekday = self.exclude(start__iso_week_day__in=[a['weekday'] for a in occupancy_schedule])
+        print([a['weekday'] for a in occupancy_schedule], 'okok')
+        return filter_weekday
 
 
 class Shift(models.Model):
@@ -29,7 +37,7 @@ class Shift(models.Model):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, verbose_name="Организация",
     )
-
+    state = models.CharField(max_length=16, blank=True, null=True, default='open')
     class Meta:
         verbose_name = "Смена"
         verbose_name_plural = "Смены"
@@ -44,9 +52,14 @@ class Shift(models.Model):
 
         prev = ShiftHistory.objects.filter(shift=self).last()
         reset = ShiftHistory.objects.create(shift=self)
+        if user:
+            party = 'user'
+        else:
+            party = 'employee'
         if not prev:
             reset.state_from = None
-            reset.instance_diff['employee'] = {'from': None, 'to': None}
+            reset.state_to = 'assigned'
+            reset.instance_diff['employee'] = {'from': None, 'to': employee.id}
 
         else:
             reset.state_from = prev.state_to
@@ -54,10 +67,11 @@ class Shift(models.Model):
         reset.save()
 
         reset.user = user
-        reset.party = 'party'
-        reset.action = 'action'
-        reset.state_to = 'Assign'
-        reset.dt_created = datetime.datetime.now()
+        reset.party = party
+        reset.action = 'assign_employee'
+        reset.state_to = 'assigned'
+        reset.dt_created = timezone.now()
+        # reset.dt_created = datetime.datetime.now()
         reset.save()
 
         self.employee = employee
@@ -88,7 +102,7 @@ class Shift(models.Model):
 
 
 class ShiftHistory(models.Model):
-    shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
+    shift = models.ForeignKey(Shift, related_name='change_history', on_delete=models.CASCADE)
     party = models.CharField(max_length=24, default=None, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="пользователь", null=True)
     action = models.CharField(max_length=124, default=None, null=True)

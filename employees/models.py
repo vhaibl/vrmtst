@@ -20,7 +20,7 @@ class Employee(models.Model):
     organization = models.ForeignKey(
         Organization, on_delete=models.PROTECT, verbose_name="организация",
     )
-
+    occupancy_schedule = models.JSONField(default=list)
     class Meta:
         unique_together = ("number", "organization")
         verbose_name_plural = "сотрудники"
@@ -28,19 +28,21 @@ class Employee(models.Model):
 
     def __str__(self):
         return self.name
+    #
+    # @property
+    # def occupancy_schedule(self):
+    #     """
+    #     Недельный график интервалов недоступности сотрудника, например:
+    #     [{"weekday": 1, "start_time": "00:00:00", "end_time": "1 00:00:00"}]
+    #     TODO: Реализовать метод
+    #     :rtype: list
+    #     """
+    #     return self._occupancy_schedule
+    #
+    # @occupancy_schedule.setter
+    # def occupancy_schedule(self, schedule):
+    #     self._occupancy_schedule = schedule
 
-    @property
-    def occupancy_schedule(self):
-        """
-        Недельный график интервалов недоступности сотрудника, например:
-        [{"weekday": 1, "start_time": "00:00:00", "end_time": "1 00:00:00"}]
-        TODO: Реализовать метод
-        :rtype: list
-        """
-        return
-
-    @occupancy_schedule.setter
-    def occupancy_schedule(self, schedule):
         """
         Установка недельного графика интервалов недоступности сотрудника
         TODO: Реализовать модель хранения графика интервалов недоступности на неделю
