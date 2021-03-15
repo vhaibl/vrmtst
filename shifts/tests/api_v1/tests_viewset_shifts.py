@@ -16,7 +16,7 @@ def test_get_shifts_list_empty(basic_api):
     assert basic_api.get("/api/v1/shifts/") == []
 
 
-def test_get_shifts_list(tz, basic_api, shift):
+def test_get_shifts_list_by_user(tz, basic_api, shift):
     assert basic_api.get("/api/v1/shifts/") == [
         {
             "id": shift.id,
@@ -24,11 +24,12 @@ def test_get_shifts_list(tz, basic_api, shift):
             "end": shift.end.astimezone(tz).isoformat(),
             "organization": shift.organization_id,
             "employee": shift.employee_id,
+            "state": "open",
         },
     ]
 
 
-def test_get_shifts_list_for_employee(tz, employee_api, shift, make_shift):
+def test_get_shifts_list_by_employee(tz, employee_api, shift, make_shift):
     shift_2 = make_shift(organization=employee_api.employee.organization)
     assert employee_api.get("/api/v1/shifts/") == [
         {
@@ -37,11 +38,12 @@ def test_get_shifts_list_for_employee(tz, employee_api, shift, make_shift):
             "end": shift_2.end.astimezone(tz).isoformat(),
             "organization": shift_2.organization_id,
             "employee": shift_2.employee_id,
+            "state": "open",
         },
     ]
 
 
-def test_get_shifts_list_available(tz, employee_api, shift, make_shift):
+def test_get_shifts_list_by_employee_available(tz, employee_api, shift, make_shift):
     employee_api.employee.occupancy_schedule = [
         {"weekday": 1, "start_time": "00:00:00", "end_time": "1 00:00:00"},
     ]
@@ -64,6 +66,7 @@ def test_get_shifts_list_available(tz, employee_api, shift, make_shift):
             "end": shift_3.end.astimezone(tz).isoformat(),
             "organization": shift_3.organization_id,
             "employee": shift_3.employee_id,
+            "state": "open",
         },
     ]
 
@@ -76,6 +79,7 @@ def test_get_shift_by_employee(tz, employee_api, make_shift):
             "end": shift.end.astimezone(tz).isoformat(),
             "organization": shift.organization_id,
             "employee": shift.employee_id,
+            "state": "open",
             "change_history": [],
         }
 
@@ -92,6 +96,7 @@ def test_get_shift_by_user(tz, basic_api, employee, make_shift):
             "end": shift.end.astimezone(tz).isoformat(),
             "organization": shift.organization_id,
             "employee": shift.employee_id,
+            "state": "assigned",
             "change_history": [
                 {
                     "party": "user",
@@ -121,6 +126,7 @@ def test_book_shift_by_employee(tz, employee_api, make_shift):
             "end": shift.end.astimezone(tz).isoformat(),
             "organization": shift.organization_id,
             "employee": employee_api.employee.id,
+            "state": "assigned",
             "change_history": [
                 {
                     "party": "employee",
@@ -153,6 +159,7 @@ def test_refuse_shift_by_employee(tz, employee_api, make_shift):
             "end": shift.end.astimezone(tz).isoformat(),
             "organization": shift.organization_id,
             "employee": employee_api.employee.id,
+            "state": "open",
             "change_history": [
                 {
                     "party": "employee",
