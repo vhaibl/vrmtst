@@ -47,19 +47,40 @@ class Shift(models.Model):
             f"{self.organization} / {self.start.isoformat()} - {self.end.isoformat()}"
         )
 
-    def assign_employee(self, employee, user):
+
+
+    def assign_employee(self, employee, user, party='user'):
         """TODO: Сделать запись истории изменений"""
 
         prev = ShiftHistory.objects.filter(shift=self).last()
         reset = ShiftHistory.objects.create(shift=self)
-        if user:
-            party = 'user'
-        else:
-            party = 'employee'
         if not prev:
-            reset.state_from = None
+            reset.state_from = 'open'
             reset.state_to = 'assigned'
             reset.instance_diff['employee'] = {'from': None, 'to': employee.id}
+        else:
+            reset.state_from = prev.state_to
+            reset.instance_diff = {'employee': {'from': prev.instance_diff['employee']['to'], 'to': 'assigned'}}
+        reset.save()
+        reset.user = user
+        reset.party = party
+        reset.action = 'assign_employee'
+        reset.state_to = 'assigned'
+        reset.dt_created = timezone.now()
+        reset.save()
+        self.state = 'assigned'
+        self.employee = employee
+        self.save()
+        return reset
+
+
+    def reset_employee(self, employee, user, party='user'):
+        """TODO: Сделать запись истории изменений"""
+        prev = ShiftHistory.objects.filter(shift=self).last()
+        reset = ShiftHistory.objects.create(shift=self)
+        if not prev:
+            reset.state_from = None
+            reset.instance_diff['employee'] = {'from': 'open', 'to': 'open'}
 
         else:
             reset.state_from = prev.state_to
@@ -68,35 +89,11 @@ class Shift(models.Model):
 
         reset.user = user
         reset.party = party
-        reset.action = 'assign_employee'
-        reset.state_to = 'assigned'
+        reset.action = 'reset_employee'
+        reset.state_to = 'open'
         reset.dt_created = timezone.now()
-        # reset.dt_created = datetime.datetime.now()
         reset.save()
-
-        self.employee = employee
-        self.save()
-
-    def reset_employee(self, employee, user):
-        """TODO: Сделать запись истории изменений"""
-        prev = ShiftHistory.objects.filter(shift=self).last()
-        reset = ShiftHistory.objects.create(shift=self)
-        if not prev:
-            reset.state_from = None
-            reset.instance_diff['employee'] = {'from': None, 'to': None}
-
-        else:
-            reset.state_from = prev.state_to
-            reset.instance_diff = {'employee': {'from': prev.instance_diff['employee']['to'], 'to': None}}
-        reset.save()
-
-        reset.user = user
-        reset.party = 'party'
-        reset.action = 'action'
-        reset.state_to = 'Reset'
-        reset.dt_created = datetime.datetime.now()
-        reset.save()
-
+        self.state = 'open'
         self.employee = employee
         self.save()
 
@@ -111,18 +108,5 @@ class ShiftHistory(models.Model):
     instance_diff = models.JSONField(default=dict)
     dt_created = models.DateTimeField(blank=True, null=True, default=None)
 
-    # {"change_history": [
-    #     {
-    #         "party": "employee",
-    #         "user": {
-    #             "username": employee_api.user.username,
-    #             "email": employee_api.user.email,
-    #         },
-    #         "action": "assign_employee",
-    #         "state_from": "open",
-    #         "state_to": "assigned",
-    #         "instance_diff": {
-    #             "employee": {"to": employee_api.employee.id, "from": None},
-    #         },
-    #         "dt_created": "2021-03-08T00:00:00.000000+03:00",
-    #     },}
+    class Meta:
+        ordering = ['-id']

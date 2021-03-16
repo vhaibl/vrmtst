@@ -39,7 +39,8 @@ class ShiftsViewSet(AnyAuthMixin, AppViewSet):
         if not request.employee:
             raise ValidationError("Запрос должен производиться сотрудником")
         shift = self.get_object()
-        shift.assign_employee(request.employee, request.user)
+
+        shift.assign_employee(request.employee, request.user, party='employee')
         serializer = self.get_serializer(shift)
         return Response(serializer.data)
 
@@ -48,6 +49,6 @@ class ShiftsViewSet(AnyAuthMixin, AppViewSet):
         if not request.employee:
             raise ValidationError("Запрос должен производиться сотрудником")
         shift = self.get_object()
-        shift.reset_employee(request.employee, request.user)
+        shift.reset_employee(request.employee, request.user, party='employee')
         serializer = self.get_serializer(shift)
         return Response(serializer.data)
