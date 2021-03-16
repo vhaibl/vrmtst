@@ -37,7 +37,7 @@ class Shift(models.Model):
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, verbose_name="Организация",
     )
-    state = models.CharField(max_length=16, blank=True, null=True, default='open')
+    state = models.CharField(max_length=16, blank=True, null=True, default='open', verbose_name="Состояние")
     class Meta:
         verbose_name = "Смена"
         verbose_name_plural = "Смены"

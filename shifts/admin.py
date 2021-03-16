@@ -1,8 +1,19 @@
 from django.contrib import admin
+from shifts.models import Shift, ShiftHistory
 
-from shifts.models import Shift
+
+class HistoryInline(admin.TabularInline):
+    model = ShiftHistory
+    extra = 0
+
+    def has_change_permission(self, request, obj):
+        return False
 
 
 @admin.register(Shift)
 class ShiftAdmin(admin.ModelAdmin):
-    """TODO: Сделать удобную админку для Смен (на свой вкус)"""
+    list_display =['start', 'end', 'state', 'employee', 'organization',]
+    list_filter = ['state', 'organization']
+    autocomplete_fields = ["employee", "organization"]
+    search_fields = ["state", "organization__name", "employee__name"]
+    inlines = [HistoryInline, ]
