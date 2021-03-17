@@ -42,6 +42,7 @@ class Employee(models.Model):
     @occupancy_schedule.setter
     def occupancy_schedule(self, schedule):
         self._occupancy_schedule = schedule
+        self.save()
 
         """
         Установка недельного графика интервалов недоступности сотрудника

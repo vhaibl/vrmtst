@@ -3,30 +3,57 @@ Copyright 2021 ООО «Верме»
 """
 import uuid
 from django.db import models
+from django.db.models.expressions import RawSQL
 
 
 class OrganizationQuerySet(models.QuerySet):
 
-    def tree_upwards(self, org_id):
-        org = self.get(id=org_id)
-        res = [org]
-        if org.parent:
+    def tree_upwards(self, child_org_id):
+        """ На основе https://developpaper.com/the-implementation-of-finding-all-child-nodes-by-sql-parent-node/ """
 
-            next_parent = self.tree_upwards(org.parent.id)
-            res += next_parent
-        queryset = self.filter(id__in=[r.id for r in res])
-        return queryset
+        query = '''
+            WITH w1( id, parent_id, level) AS  
+                (SELECT  
+                    id,  
+                    parent_id,  
+                    0 AS level
+                FROM  
+                    orgunits_organization  
+                WHERE  
+                    id = %s 
+                UNION ALL  
+                SELECT  
+                    orgunits_organization.id,  
+                    orgunits_organization.parent_id,  
+                    level + 1
+                FROM  
+                    orgunits_organization JOIN w1 ON orgunits_organization.id= w1.parent_id
+                )  
+            SELECT id FROM w1
+            '''
+        return self.filter(id__in=RawSQL(query, [child_org_id]))
 
-    def tree_downwards(self, org_id):
-        org = self.get(id=org_id)
-        res = [org]
-        children = self.filter(parent=org)
-        if children:
-            for child in children:
-                res += self.tree_downwards(child.id)
-        queryset = self.filter(id__in=[r.id for r in res])
-        return queryset
+    def tree_downwards(self, root_org_id):
+        """ На основе https://developpaper.com/the-implementation-of-finding-all-child-nodes-by-sql-parent-node/ """
 
+        query = '''
+            WITH w1( id, parent_id) AS 
+                (SELECT 
+                    orgunits_organization.id, 
+                    orgunits_organization.parent_id 
+                FROM 
+                    orgunits_organization 
+                WHERE 
+                    id = %s
+                UNION ALL 
+                SELECT 
+                    orgunits_organization.id, 
+                    orgunits_organization.parent_id 
+                FROM 
+                    orgunits_organization JOIN w1 ON orgunits_organization.parent_id= w1.id)
+            SELECT id FROM w1
+            '''
+        return self.filter(id__in=RawSQL(query, [root_org_id]))
 
 class Organization(models.Model):
     """Организации"""

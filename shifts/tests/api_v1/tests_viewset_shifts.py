@@ -47,9 +47,7 @@ def test_get_shifts_list_by_employee_available(tz, employee_api, shift, make_shi
     employee_api.employee.occupancy_schedule = [
         {"weekday": 1, "start_time": "00:00:00", "end_time": "1 00:00:00"},
     ]
-    employee_api.patch('/api/v1/employees/1/', {
-        "occupancy_schedule": [{"weekday": 1, "start_time": "00:00:00", "end_time": "1 00:00:00"}]
-    })
+
     make_shift(
         organization=employee_api.employee.organization,
         start="2021-03-08T09:00:00+03:00",
