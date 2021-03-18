@@ -1,9 +1,10 @@
 import datetime
 
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.dateparse import parse_duration, parse_time
 
 from employees.models import Employee
 from orgunits.models import Organization
@@ -11,18 +12,18 @@ from orgunits.models import Organization
 
 class ShiftQuerySet(models.QuerySet):
     def filter_availability(self, occupancy_schedule):
-        # zz = []
-        # for x in occupancy_schedule:
-        # datestart = datetime.datetime.strptime(x['start_time'], '%H:%M:%S')
-        # dateend = datetime.datetime.strptime(x['end_time'], '%d %H:%M:%S')
-        # weekday = x['weekday']
-            # weekday = 0
 
+        z = []
+        for o in occupancy_schedule:
+            start_time = parse_time(o['start_time'])
 
+            duration = parse_duration(o['end_time'])
+            qo = self.exclude(start__iso_week_day=o['weekday'], start__time__gte=start_time, end__date__lte=F('start__time') + duration)
+            z.append(qo.values_list('id', flat=True))
 
-        filter_weekday = self.exclude(start__iso_week_day__in=[a['weekday'] for a in occupancy_schedule])
-        print([a['weekday'] for a in occupancy_schedule], 'weekdays')
-        return filter_weekday
+        queryset = self.filter(id__in=z)
+        return queryset
+
 
 
 class Shift(models.Model):
